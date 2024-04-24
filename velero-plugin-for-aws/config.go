@@ -4,14 +4,15 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"net/http"
+	"os"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"os"
 )
 
 type configBuilder struct {
@@ -33,6 +34,11 @@ func (cb *configBuilder) WithRegion(region string) *configBuilder {
 
 func (cb *configBuilder) WithProfile(profile string) *configBuilder {
 	cb.opts = append(cb.opts, config.WithSharedConfigProfile(profile))
+	return cb
+}
+
+func (cb *configBuilder) WithAnonymousCredentials(anonymousCredentials bool) *configBuilder {
+	cb.opts = append(cb.opts, config.WithCredentialsProvider(aws.AnonymousCredentials{}))
 	return cb
 }
 

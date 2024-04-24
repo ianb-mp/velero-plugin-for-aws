@@ -254,6 +254,12 @@ It can be set up for Velero by creating a role that will have required permissio
       --policy-document file://./velero-policy.json
     ```
 
+### Option 3: Disable credentials
+
+Use this in scenarios where the S3 bucket has a policy that permits access in ways that do not require credentials e.g. IP address or VPC endpoint
+
+Set `anonymousCredentials: "true"` in the [`BackupStorageLocation` config](backupstoragelocation.md)
+
 ## Install and start Velero
 
 [Download][4] Velero

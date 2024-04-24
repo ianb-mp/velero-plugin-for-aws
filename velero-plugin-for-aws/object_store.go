@@ -19,16 +19,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"io"
 	"os"
 	"sort"
 	"strconv"
 	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -46,6 +47,7 @@ const (
 	signatureVersionKey          = "signatureVersion"
 	credentialsFileKey           = "credentialsFile"
 	credentialProfileKey         = "profile"
+	anonymousCredentialsKey      = "anonymousCredentials"
 	serverSideEncryptionKey      = "serverSideEncryption"
 	insecureSkipTLSVerifyKey     = "insecureSkipTLSVerify"
 	caCertKey                    = "caCert"
@@ -93,6 +95,7 @@ func (o *ObjectStore) Init(config map[string]string) error {
 		signatureVersionKey,
 		credentialsFileKey,
 		credentialProfileKey,
+		anonymousCredentialsKey,
 		serverSideEncryptionKey,
 		insecureSkipTLSVerifyKey,
 		enableSharedConfigKey,
@@ -111,6 +114,7 @@ func (o *ObjectStore) Init(config map[string]string) error {
 		s3ForcePathStyleVal       = config[s3ForcePathStyleKey]
 		credentialProfile         = config[credentialProfileKey]
 		credentialsFile           = config[credentialsFileKey]
+		anonymousCredentialsVal   = config[anonymousCredentialsKey]
 		serverSideEncryption      = config[serverSideEncryptionKey]
 		insecureSkipTLSVerifyVal  = config[insecureSkipTLSVerifyKey]
 		tagging                   = config[taggingKey]
@@ -122,6 +126,7 @@ func (o *ObjectStore) Init(config map[string]string) error {
 		caCert                = config[caCertKey]
 		s3ForcePathStyle      bool
 		insecureSkipTLSVerify bool
+		anonymousCredentials  bool
 		err                   error
 	)
 
@@ -134,6 +139,12 @@ func (o *ObjectStore) Init(config map[string]string) error {
 	if insecureSkipTLSVerifyVal != "" {
 		if insecureSkipTLSVerify, err = strconv.ParseBool(insecureSkipTLSVerifyVal); err != nil {
 			return errors.Wrapf(err, "could not parse %s (expected bool)", insecureSkipTLSVerifyKey)
+		}
+	}
+
+	if anonymousCredentialsVal != "" {
+		if anonymousCredentials, err = strconv.ParseBool(anonymousCredentialsVal); err != nil {
+			return errors.Wrapf(err, "could not parse %s (expected bool)", anonymousCredentialsKey)
 		}
 	}
 
@@ -161,6 +172,7 @@ func (o *ObjectStore) Init(config map[string]string) error {
 	cfg, err := newConfigBuilder(o.log).WithRegion(region).
 		WithProfile(credentialProfile).
 		WithCredentialsFile(credentialsFile).
+		WithAnonymousCredentials(anonymousCredentials).
 		WithTLSSettings(insecureSkipTLSVerify, caCert).Build()
 	if err != nil {
 		return errors.WithStack(err)
